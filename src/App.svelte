@@ -2,6 +2,7 @@
   import JSBI from 'jsbi';
   import { onMount } from 'svelte';
   import { importPublicKey } from './utils/import-public-key';
+  import { importPrivateKey } from './utils/import-private-key';
   import PinBlock from './components/pin-block.svelte';
   import EncryptedContents from './components/encrypted-contents.svelte';
 
@@ -12,6 +13,7 @@
   let ansiPinBlock = '';
   let encryptedAnsiPinBlock = '';
   let publicKey = null;
+  let privateKey = null;
 
   const reset = () => {
     pinBlock = '';
@@ -65,10 +67,17 @@
     publicKey = await importPublicKey(text);
   };
 
+  const loadPrivateKey = async () => {
+    const response = await fetch('/private.pem');
+    const text = await response.text();
+    privateKey = await importPrivateKey(text);
+  };
+
   const setEncryptedAnsiPinBlock = encryptedPinBlock => encryptedAnsiPinBlock = encryptedPinBlock;
 
   onMount(() => {
     loadPublicKey();
+    loadPrivateKey();
   });
 </script>
 
@@ -89,18 +98,10 @@
   <PinBlock {panBlock} {pinBlock} {ansiPinBlock} {publicKey} {setEncryptedAnsiPinBlock} />
 {/if}
 
-{#if encryptedAnsiPinBlock}
-  <EncryptedContents {pan} {encryptedAnsiPinBlock} />
+{#if encryptedAnsiPinBlock && privateKey}
+  <EncryptedContents {pan} {encryptedAnsiPinBlock} {ansiPinBlock} {privateKey} />
 {/if}
 
-  <!-- {#if !decodedAnsiPinBlock && encryptedAnsiPinBlock}
-    <button on:click={() => setDecryptedAnsiPinBlock(encryptedAnsiPinBlock)}>Decrypt ANSI PIN block using private key</button>
-  {/if}
-
-  {#if decodedAnsiPinBlock}
-    <p>Decrypted ANSI PIN block<br /> {decodedAnsiPinBlock}</p>
-    <p>PIN block after passing decrypted ANSI PIN block and PAN block through xor cipher function<br /> {pinBlockFromDecodedAnsiPinBlock}</p>
-  {/if} -->
 <style>
   article { width: 500px }
 </style>
